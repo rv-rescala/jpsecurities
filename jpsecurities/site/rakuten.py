@@ -12,7 +12,7 @@ class RakutenException(Exception):
 
 
 class Rakuten:
-    def __init__(self, executable_path: str, chrome_options: Options, id: str, pwd: str, implicitly_wait: int = 10):
+    def __init__(self, executable_path: str, chrome_options: Options, username: str, pwd: str, implicitly_wait: int = 10):
         """
 
         :param executable_path:
@@ -22,7 +22,7 @@ class Rakuten:
         self.executable_path = executable_path
         self.chrome_options = chrome_options
         self.implicitly_wait = implicitly_wait
-        self.id = id
+        self.username = username
         self.pwd = pwd
 
     def __enter__(self):
@@ -41,8 +41,16 @@ class Rakuten:
 
     def login(self):
         url = "https://www.rakuten-sec.co.jp/web/login_error.html"
-        logger.info(f"access to {url}")
+        logger.info(f"Access to {url}.")
         self.driver.get(url=url)
-        self.driver.find_element_by_name("loginid").send_keys(self.id)
-        self.driver.find_element_by_name("loginid").send_keys(self.id)
-        #self.driver.find_element_by_name("btnNext").click()  # btnNext
+        self.driver.find_element_by_name("loginid").send_keys(self.username)
+        self.driver.find_element_by_name("passwd").send_keys(self.pwd)
+        self.driver.find_element_by_name("submit%template").click()  # login
+
+        cur_url = self.driver.current_url
+        if cur_url == url:  # login failed
+            logger.error(f"Rakuten login is failed.")
+            raise RakutenException("Login is failed.")
+        else:  # login success
+            logger.info(f"Rakuten login is success.")
+            return True
