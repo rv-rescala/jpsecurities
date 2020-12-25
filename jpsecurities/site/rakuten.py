@@ -3,6 +3,9 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
+from selenium.webdriver.support.ui import WebDriverWait
+from bs4 import BeautifulSoup
+import time
 
 logger = logging.getLogger()
 
@@ -34,6 +37,7 @@ class Rakuten:
         self.driver.implicitly_wait(self.implicitly_wait)
         logger.info("Rakuten Start")
         self.login()
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.driver.quit()
@@ -54,3 +58,20 @@ class Rakuten:
         else:  # login success
             logger.info(f"Rakuten login is success.")
             return True
+
+    def home(self, default_wait: int = 10):
+        home = "pcm-g-header__inner-01"
+
+        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name(home))
+        self.driver.find_element_by_class_name(home).click()  # ヘッダの楽天証券ロゴをクリック
+        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name(home))
+
+    def asset_info(self, default_wait: int = 10):
+        # parse home page and get content
+        self.home()
+        asset_total_top = "asset_total_top"  # div id
+        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_id(asset_total_top))
+        #html = self.driver.page_source.encode('utf-8')
+        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        home_asset_info = soup.find("div", {"id": asset_total_top})
+        print(home_asset_info)
