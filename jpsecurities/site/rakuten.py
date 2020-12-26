@@ -15,7 +15,8 @@ class RakutenException(Exception):
 
 
 class Rakuten:
-    def __init__(self, executable_path: str, chrome_options: Options, username: str, pwd: str, implicitly_wait: int = 10):
+    def __init__(self, executable_path: str, chrome_options: Options, username: str, pwd: str,
+                 implicitly_wait: int = 10):
         """
 
         :param executable_path:
@@ -69,9 +70,40 @@ class Rakuten:
     def asset_info(self, default_wait: int = 10):
         # parse home page and get content
         self.home()
-        asset_total_top = "asset_total_top"  # div id
-        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_id(asset_total_top))
-        #html = self.driver.page_source.encode('utf-8')
+        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name("pcm-content"))
         soup = BeautifulSoup(self.driver.page_source, "lxml")
-        home_asset_info = soup.find("div", {"id": asset_total_top})
-        print(home_asset_info)
+
+        # daily収益
+        balance_data_actual_data = soup.find("div", {"id": "balance_data_actual_data"}).findAll("tr")
+        nobr = list(map(lambda x: x.text.replace(",","").replace(" 円", ""), filter(None, map(lambda x: x.find("nobr"), balance_data_actual_data))))
+        """
+        国内株式
+        米国株式
+        中国株式
+        アセアン株式
+        債券
+        投資信託
+        外貨建MMF
+        預り金
+        売建予想配当金
+        信用取引保証金
+        国内先物OP取引証拠金
+        外貨預り金合計
+        信用建玉評価損益
+        """
+        daily_revenue = {
+            "Domestic": nobr[0],
+            "US": nobr[1],
+            "China": nobr[2],
+            "ASEAN": nobr[3],
+            "Bonds": nobr[4],
+            "InvestmentTrusts": nobr[5],
+            "ForeignCurrencyMMFs": nobr[6],
+            "Deposits": nobr[7],
+            "ExpectedDividendsOnSales": nobr[8],
+            "MarginTransactionGuaranteeMoney": nobr[9],
+            "DomesticFuturesOpTradingMargins": nobr[10],
+            "TotalForeignCurrencyDeposits": nobr[11],
+            "UnrealizedGainsLossesOnMarginTransaction": nobr[12]
+        }
+        print(daily_revenue)
