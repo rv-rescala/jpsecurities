@@ -131,9 +131,11 @@ class Rakuten:
         kashikabu_accounting_details = []
         with open(download_path, 'r', encoding='shift_jis') as csvfile:
             csv_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            next(csv_reader)
             for row in csv_reader:
                 kashikabu_accounting_details.append({
                     "accounting_date": row[0].replace("/", ""),
+                    "jp_securities": "rakuten",
                     "service_type": row[1],
                     "stock_code": row[2],
                     "stock_name": row[3],
