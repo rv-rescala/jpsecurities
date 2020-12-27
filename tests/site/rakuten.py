@@ -26,10 +26,10 @@ class TestRakuten(unittest.TestCase):
             time.sleep(10000)
     """
 
-    def test_download_kashikabu_accounting_details(self):
+    def test_kashikabu_accounting_details(self):
         with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
                      username=self.username, pwd=self.pwd) as rakuten:
-            kashikabu_accounting_details = rakuten.download_kashikabu_accounting_details()
+            kashikabu_accounting_details = rakuten.kashikabu_accounting_details()
             print(kashikabu_accounting_details)
             time.sleep(10000)
 

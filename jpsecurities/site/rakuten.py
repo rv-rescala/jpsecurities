@@ -9,6 +9,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from enum import Enum
 from selenium.webdriver.common.by import By
 from jpsecurities.common.selenium import click_link_by_href, download
+import csv
 import urllib.parse
 
 logger = logging.getLogger()
@@ -100,7 +101,7 @@ class Rakuten:
                 result = BeautifulSoup(self.driver.page_source, "lxml")
         return result
 
-    def download_kashikabu_accounting_details(self, path: str = "/tmp", default_wait: int = 10):
+    def download_kashikabu_accounting_details(self, default_wait: int = 10, path: str = "/tmp"):
         """
 
         :param default_wait:
@@ -119,6 +120,29 @@ class Rakuten:
         logging.info(f"kashikabu_detail_csv_rul: {kashikabu_detail_csv_rul}")
         download(driver=self.driver, url=kashikabu_detail_csv_rul, path=download_path)
         return download_path
+
+    def kashikabu_accounting_details(self, default_wait: int = 10):
+        """
+
+        :param default_wait:
+        :return:
+        """
+        download_path = self.download_kashikabu_accounting_details(default_wait=default_wait)
+        kashikabu_accounting_details = []
+        with open(download_path, 'r', encoding='shift_jis') as csvfile:
+            csv_reader = csv.reader(csvfile, delimiter=',', quotechar='"')
+            for row in csv_reader:
+                kashikabu_accounting_details.append({
+                    "accounting_date": row[0].replace("/", ""),
+                    "service_type": row[1],
+                    "stock_code": row[2],
+                    "stock_name": row[3],
+                    "quantity": row[4],
+                    "market_price": row[5],
+                    "lending_stock_interest_rate": row[6],
+                    "recorded_amount": row[7]
+                })
+        return kashikabu_accounting_details
 
     def asset_info(self, default_wait: int = 10):
         # parse home page and get content
