@@ -18,13 +18,20 @@ class TestRakuten(unittest.TestCase):
     username = os.environ['RAKUTEN_USERNAME']
     pwd = os.environ['RAKUTEN_PWD']
 
-    def test_login(self):
+    """
+    def test_asset_info(self):
         with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
                      username=self.username, pwd=self.pwd) as rakuten:
-            rakuten.asset_info()
+            rakuten_asset_info = rakuten.asset_info()
             time.sleep(10000)
+    """
 
-
+    def test_download_kashikabu_accounting_details(self):
+        with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
+                     username=self.username, pwd=self.pwd) as rakuten:
+            kashikabu_accounting_details = rakuten.download_kashikabu_accounting_details()
+            print(kashikabu_accounting_details)
+            time.sleep(10000)
 
 if __name__ == "__main__":
     unittest.main()

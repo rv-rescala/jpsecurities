@@ -16,8 +16,8 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     
 setup(
     name='jpsecurities',
-    version='0.1.0',
-    description='jp securities crawlers',
+    version='0.1.1',
+    description='API for jp securities',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='rv',
