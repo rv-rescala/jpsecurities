@@ -1,5 +1,6 @@
 import requests
 from selenium import webdriver
+from bs4 import BeautifulSoup
 
 
 def webdriver_to_request(driver: webdriver):

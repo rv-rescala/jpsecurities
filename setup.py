@@ -23,7 +23,7 @@ setup(
     author='rv',
     author_email='yo-maruya@rescala.jp',
     keywords='python crawler scraping',
-    install_requires=['requests', 'bs4', 'selenium' , 'lxml'],
+    install_requires=['requests', 'bs4', 'selenium', 'lxml', 'pandas'],
     url='https://rescala.jp',
     license='MIT',
     packages=find_packages(exclude=('tests')),
