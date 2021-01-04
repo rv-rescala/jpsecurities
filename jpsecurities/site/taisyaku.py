@@ -74,7 +74,7 @@ class Taisyaku:
         }
         return urls
 
-    def get_balance(self):
+    def get_balance(self, only_tosho: bool = True):
         """
         銘柄別残高一覧を取得
         :return:
@@ -83,9 +83,11 @@ class Taisyaku:
         url = self.get_pcsl_and_balance_url()[name]
         path = download(request=self.request, url=url, path=f"/tmp/{name}.csv")
         df = pd.read_csv(path, skiprows=4, encoding="SHIFT-JIS")
+        if only_tosho:
+            df = df.query('市場区分 == "東証およびＰＴＳ"')
         return df
 
-    def get_pcsl(self):
+    def get_pcsl(self, only_tosho: bool = True):
         """
         品貸料率一覧を取得
         :return:
@@ -94,6 +96,8 @@ class Taisyaku:
         url = self.get_pcsl_and_balance_url()[name]
         path = download(request=self.request, url=url, path=f"/tmp/{name}.csv")
         df = pd.read_csv(path, skiprows=4, encoding="SHIFT-JIS")
+        if only_tosho:
+            df = df.query('市場区分 == "東証"')
         return df
 
     def get_pcsl_balance(self):
@@ -107,5 +111,6 @@ class Taisyaku:
 
         df_balance = self.get_balance()
         df_balance["申込日"] = df_balance["申込日"].str.replace('/','')
+
         df = pd.merge(df_pcsl, df_balance, on='コード', how='outer')
         return df
