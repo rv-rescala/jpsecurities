@@ -23,8 +23,11 @@ class TestTaisyaku(unittest.TestCase):
         with Taisyaku(executable_path=self.executable_path, chrome_options=self.chrome_options) as t:
             #df_pcsl = t.get_pcsl()
             #df_balance = t.get_pcsl_and_balance_url()
-            df_pcsl_balance = t.get_pcsl_balance()
-            df_pcsl_balance.to_csv('/tmp/df_pcsl_balance.csv')
+            #df_pcsl_balance = t.get_pcsl_balance()
+            #df_pcsl_balance.to_csv('/tmp/df_pcsl_balance.csv')
+            df = t.get_other_seigenichiran()
+            df.to_csv('/tmp/df.csv')
+            #t.get_seigenichiran()
 
 if __name__ == "__main__":
     unittest.main()

@@ -114,3 +114,42 @@ class Taisyaku:
 
         df = pd.merge(df_pcsl, df_balance, on='コード', how='outer')
         return df
+
+    def get_other(self):
+        """
+        貸借銘柄等一覧
+        :return:
+        """
+        url = "https://www.taisyaku.jp/sys-list/data/other.xlsx"
+        path = download(request=self.request, url=url, path=f"/tmp/other.xlsx")
+        df = pd.read_excel(path, skiprows=5, engine='openpyxl')
+        df = df.add_prefix("other_")
+        df = df.rename(columns={'other_コード': 'コード'})
+        return df
+
+    def get_seigenichiran(self):
+        """
+        注意喚起および申込停止措置等一覧表
+        :return:
+        """
+        url = "https://www.taisyaku.jp/sys-list/data/seigenichiran.xlsx"
+        path = download(request=self.request, url=url, path=f"/tmp/seigenichiran.xlsx")
+        df = pd.read_excel(path, skiprows=9, engine='openpyxl')
+        df = df.rename(columns={'Unnamed: 0':'直近発表'})
+        df = df.rename(columns={'Unnamed: 1': 'コード'})
+        df = df.rename(columns={'Unnamed: 2': '銘柄名'})
+        df = df.rename(columns={'Unnamed: 3': '実施措置'})
+        df = df.rename(columns={'Unnamed: 4': '実施内容'})
+        df = df.rename(columns={'Unnamed: 5': '備考'})
+        df = df.rename(columns={'Unnamed: 6': '通知日'})
+        df = df.rename(columns={'Unnamed: 7': '実施'})
+        df["通知日"] = df["通知日"].str.replace('月|日|年', '')
+        df = df.add_prefix("seigenichiran_")
+        df = df.rename(columns={'seigenichiran_コード': 'コード'})
+        return df
+
+    def get_other_seigenichiran(self):
+        df_other = self.get_other()
+        df_seigenichiran = self.get_seigenichiran()
+        df = pd.merge(df_other, df_seigenichiran, on='コード', how='outer')
+        return df
