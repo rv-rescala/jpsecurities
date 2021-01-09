@@ -1,19 +1,11 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
-from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup
-from selenium.webdriver.support import expected_conditions as EC
-from enum import Enum
-from selenium.webdriver.common.by import By
-from jpsecurities.common.selenium import click_link_by_href, download
-import csv
-import urllib.parse
+from jpsecurities.common.selenium import download
 from jpsecurities.common.request import download
 import requests
-from requests import Session
 import pandas as pd
 
 
@@ -108,6 +100,8 @@ class Taisyaku:
         df_pcsl = self.get_pcsl()
         df_pcsl["貸借申込日"] = df_pcsl["貸借申込日"].astype(str)
         df_pcsl["決済日"] = df_pcsl["決済日"].astype(str)
+        df_pcsl = df_pcsl.drop("市場区分", axis=1)
+        df_pcsl = df_pcsl.drop("銘柄名", axis=1)
 
         df_balance = self.get_balance()
         df_balance["申込日"] = df_balance["申込日"].str.replace('/','')
@@ -123,8 +117,9 @@ class Taisyaku:
         url = "https://www.taisyaku.jp/sys-list/data/other.xlsx"
         path = download(request=self.request, url=url, path=f"/tmp/other.xlsx")
         df = pd.read_excel(path, skiprows=5, engine='openpyxl')
-        df = df.add_prefix("other_")
-        df = df.rename(columns={'other_コード': 'コード'})
+        df = df.add_prefix("貸借取引対象銘_")
+        df = df.rename(columns={'貸借取引対象銘_コード': 'コード'})
+        df = df.rename(columns={'貸借取引対象銘_銘柄名': '銘柄名'})
         return df
 
     def get_seigenichiran(self):
@@ -135,7 +130,7 @@ class Taisyaku:
         url = "https://www.taisyaku.jp/sys-list/data/seigenichiran.xlsx"
         path = download(request=self.request, url=url, path=f"/tmp/seigenichiran.xlsx")
         df = pd.read_excel(path, skiprows=9, engine='openpyxl')
-        df = df.rename(columns={'Unnamed: 0':'直近発表'})
+        df = df.rename(columns={'Unnamed: 0': '直近発表'})
         df = df.rename(columns={'Unnamed: 1': 'コード'})
         df = df.rename(columns={'Unnamed: 2': '銘柄名'})
         df = df.rename(columns={'Unnamed: 3': '実施措置'})
@@ -144,12 +139,22 @@ class Taisyaku:
         df = df.rename(columns={'Unnamed: 6': '通知日'})
         df = df.rename(columns={'Unnamed: 7': '実施'})
         df["通知日"] = df["通知日"].str.replace('月|日|年', '')
-        df = df.add_prefix("seigenichiran_")
-        df = df.rename(columns={'seigenichiran_コード': 'コード'})
+        df = df.add_prefix("注意喚起および申込停止措置_")
+        df = df.rename(columns={'注意喚起および申込停止措置_コード': 'コード'})
+        df = df.rename(columns={'注意喚起および申込停止措置_銘柄名': '銘柄名'})
         return df
 
     def get_other_seigenichiran(self):
         df_other = self.get_other()
         df_seigenichiran = self.get_seigenichiran()
+        df_seigenichiran = df_seigenichiran.drop("銘柄名", axis=1)
         df = pd.merge(df_other, df_seigenichiran, on='コード', how='outer')
+        return df
+
+    def get_taisyaku(self, only_taisyaku_enable: bool = True):
+        df_pcsl_balance = self.get_pcsl_balance()
+        df_other_seigenichiran =self.get_other_seigenichiran()
+        df_other_seigenichiran = df_other_seigenichiran.drop("銘柄名", axis=1)
+        df = pd.merge(df_pcsl_balance, df_other_seigenichiran, on='コード', how='outer')
+
         return df

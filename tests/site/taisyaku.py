@@ -25,8 +25,8 @@ class TestTaisyaku(unittest.TestCase):
             #df_balance = t.get_pcsl_and_balance_url()
             #df_pcsl_balance = t.get_pcsl_balance()
             #df_pcsl_balance.to_csv('/tmp/df_pcsl_balance.csv')
-            df = t.get_other_seigenichiran()
-            df.to_csv('/tmp/df.csv')
+            df = t.get_taisyaku()
+            df.to_csv('/tmp/taisyaku.csv')
             #t.get_seigenichiran()
 
 if __name__ == "__main__":

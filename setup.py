@@ -16,7 +16,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     
 setup(
     name='jpsecurities',
-    version='0.2.0.1',
+    version='0.2.0.2',
     description='API for jp securities',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -29,7 +29,7 @@ setup(
     packages=find_packages(exclude=('tests')),
     python_requires='>=3.7',
     project_urls={  # Optional
-        'Bug Reports': 'https://github.com/rv-rescala/catscore/issues',
-        'Source': 'https://github.com/rv-rescala/catscore'
+        'Bug Reports': 'https://github.com/rv-rescala/jpsecurities/issues',
+        'Source': 'https://github.com/rv-rescala/jpsecurities'
     }
 )

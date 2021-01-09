@@ -10,15 +10,17 @@ from enum import Enum
 from selenium.webdriver.common.by import By
 from jpsecurities.common.selenium import click_link_by_href, download
 import csv
+import pandas as pd
 import urllib.parse
+import re
 
 logger = logging.getLogger()
+from datetime import datetime, timedelta, timezone
 
 
 class GlobalMenu(Enum):
     DOMESTIC_STOCK = "国内株式"
-    KASIKABU = "貸株"
-
+    KASHIKABU = "貸株"
 
 class RakutenException(Exception):
     pass
@@ -40,6 +42,10 @@ class Rakuten:
         self.pwd = pwd
 
     def __enter__(self):
+        """
+
+        :return:
+        """
         caps = DesiredCapabilities.CHROME
         caps['loggingPrefs'] = {'performance': 'INFO'}
         self.driver: webdriver = webdriver.Chrome(executable_path=self.executable_path,
@@ -51,6 +57,13 @@ class Rakuten:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+
+        :param exc_type:
+        :param exc_val:
+        :param exc_tb:
+        :return:
+        """
         self.driver.quit()
         logger.info("Rakuten End")
 
@@ -71,12 +84,21 @@ class Rakuten:
             return True
 
     def home(self, default_wait: int = 10):
+        """
+        ホームに移動
+        :param default_wait:
+        :return:
+        """
         home = "pcm-g-header__inner-01"
         WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name(home))
         self.driver.find_element_by_class_name(home).click()  # ヘッダの楽天証券ロゴをクリック
         WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name(home))
 
     def get_session_id(self):
+        """
+        セッションIDを取得
+        :return:
+        """
         url = self.driver.current_url
         #qs = urllib.parse.urlparse(url).query
         #qs_d = urllib.parse.parse_qs(qs)
@@ -86,44 +108,51 @@ class Rakuten:
         return session_id
 
     def transition_global_menu(self, menu: GlobalMenu, default_wait: str = 10) -> BeautifulSoup:
+        """
+        グローバルメニューの遷移
+        :param menu:
+        :param default_wait:
+        :return:
+        """
         self.home()
         wait = WebDriverWait(self.driver, default_wait)
         result = None
         # 国内株式
-        if (menu is GlobalMenu.DOMESTIC_STOCK) or (menu is GlobalMenu.KASIKABU):
+        if (menu is GlobalMenu.DOMESTIC_STOCK) or (menu is GlobalMenu.KASHIKABU):
             # 国内株式メニュー
             wait.until(EC.presence_of_element_located((By.LINK_TEXT, "国内株式"))).click()
             if menu is GlobalMenu.DOMESTIC_STOCK:
                 result = BeautifulSoup(self.driver.page_source, "lxml")
             # 貸株
-            if menu is GlobalMenu.KASIKABU:
+            if menu is GlobalMenu.KASHIKABU:
                 wait.until(EC.presence_of_element_located((By.LINK_TEXT, "貸株"))).click()
                 result = BeautifulSoup(self.driver.page_source, "lxml")
         return result
 
     def download_kashikabu_accounting_details(self, default_wait: int = 10, path: str = "/tmp"):
         """
-
+        楽天証券の金利・配当金相当額 計上明細をダウンロード
+        URL: https://member.rakuten-sec.co.jp/app/info_jp_sl_detail_list_post.do
         :param default_wait:
         :return:
         """
         wait = WebDriverWait(self.driver, default_wait)
-        self.transition_global_menu(GlobalMenu.KASIKABU, default_wait)
+        self.transition_global_menu(GlobalMenu.KASHIKABU, default_wait)
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "貸株"))).click()
-        # 貸株詳細ページ
+        # 貸株詳細ページのURLを取得
         kashikabu_detail_url = click_link_by_href(self.driver, "info_jp_sl_detail_list_post")
         logging.info(f"kashikabu_detail_url: {kashikabu_detail_url}")
         # download csv
         session_id = self.get_session_id()
-        download_path = f"{path}/kashikabu_accounting_details.csv"
+        download_path = f"{path}/rakuten_kashikabu_accounting_details.csv"
         kashikabu_detail_csv_rul = f"https://member.rakuten-sec.co.jp/app/info_jp_sl_detail_list_post.do;BV_SessionID={session_id}?eventType=csv"
-        logging.info(f"kashikabu_detail_csv_rul: {kashikabu_detail_csv_rul}")
+        logging.debug(f"kashikabu_detail_csv_rul: {kashikabu_detail_csv_rul}")
         download(driver=self.driver, url=kashikabu_detail_csv_rul, path=download_path)
         return download_path
 
     def kashikabu_accounting_details(self, default_wait: int = 10):
         """
-
+        楽天証券の金利・配当金相当額 計上明細を取得
         :param default_wait:
         :return:
         """
@@ -146,7 +175,74 @@ class Rakuten:
                 })
         return kashikabu_accounting_details
 
+    def download_kashikabu_rate(self, default_wait: int = 10, path: str = "/tmp"):
+        """
+        貸株金利一覧をダウンロード
+        URL: https://member.rakuten-sec.co.jp/app/info_jp_sl_rate_search_new.do
+        :param default_wait:
+        :param path:
+        :return:
+        """
+        wait = WebDriverWait(self.driver, default_wait)
+        self.transition_global_menu(GlobalMenu.KASHIKABU, default_wait)
+        wait.until(EC.presence_of_element_located((By.LINK_TEXT, "貸株金利"))).click()
+        # download csv
+        session_id = self.get_session_id()
+        download_path = f"{path}/rakuten_kashikabu_rate.csv"
+        url = f"https://member.rakuten-sec.co.jp/app/info_jp_sl_rate_search_new.do;BV_SessionID={session_id}?eventType=csv"
+        logging.debug(f"download_kashikabu_rate url : {url}")
+        download(driver=self.driver, url=url, path=download_path)
+        return download_path
+
+    def kashikabu_rate(self, default_wait: int = 10) -> pd.DataFrame:
+        path = self.download_kashikabu_rate()
+        df = pd.read_csv(path, encoding="SHIFT-JIS")
+        df = df.rename(columns={'銘柄コード': 'コード'})
+        logger.info(f"kashikabu_rate df.columns: {df.columns}")
+        columns = df.columns
+
+        # 日付のフォーマット処理
+        from_date = re.findall("(?<=（).+?(?=）)", columns[2])[0]
+        to_date = re.findall("(?<=（).+?(?=\-)", columns[3])[0]
+        JST = timezone(timedelta(hours=+9), 'JST')
+        today = datetime.now(JST).date()
+
+        logger.info(f"rakuten kashikabu rate, from: {from_date}, to: {to_date}")
+        if to_date > from_date:
+            formated_from_date = datetime.strptime(f"{today.year}/{from_date}", '%Y/%m/%d')
+            formated_to_date = datetime.strptime(f"{today.year}/{to_date}", '%Y/%m/%d') - timedelta(days=1)
+            df_from = df.assign(date=formated_from_date)
+            df_to = df.assign(date=formated_to_date)
+            df = pd.concat([df_from, df_to])
+            df = df.rename(columns={columns[2]: '貸株金利'})
+            df = df.rename(columns={columns[3]: '貸株金利(予定)'})
+            df = df.rename(columns={columns[4]: '信用貸株金利'})
+            df = df.rename(columns={columns[5]: '信用貸株金利(予定)'})
+            logging.info(f"formated_from_date formated_to_date, {formated_from_date} {formated_to_date}")
+        else:
+            raise RakutenException(f"from_to date is illegal, {from_date}, {to_date}")
+        # 日付データの連続化処理
+        # Enhance: より効率的な値の連続化
+        codes = df["コード"].unique()
+        r_df = None
+        count = 0
+        for code in codes:
+            df_code = df[df["コード"] == code]
+            r = pd.date_range(start=df_code.date.min(), end=df_code.date.max())
+            df_filled_code = df_code.set_index('date').reindex(r).fillna(method='ffill').rename_axis('date').reset_index()
+            if count > 1:
+                r_df = pd.concat([r_df, df_filled_code])
+            else:
+                r_df = df_filled_code
+            count = count + 1
+        return r_df
+
     def asset_info(self, default_wait: int = 10):
+        """
+        楽天証券の保有資産情報を取得
+        :param default_wait:
+        :return:
+        """
         # parse home page and get content
         self.home()
         WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_class_name("pcm-content"))

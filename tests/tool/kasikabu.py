@@ -1,17 +1,18 @@
 import unittest
-from jpsecurities.site.rakuten import Rakuten
+from jpsecurities.tool.kasikabu import Kashikabu
 from selenium.webdriver.chrome.options import Options
 import time
 import logging
 import sys
 import os
 from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG
+import pandas as pd
 
 logging.getLogger().setLevel(DEBUG)
 logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
-class TestRakuten(unittest.TestCase):
+class TestKashikabu(unittest.TestCase):
     chrome_options = Options()
     chrome_options.binary_location = os.environ['CHROME_BIN_LOCATION']
     chrome_options.headless = True
@@ -19,13 +20,10 @@ class TestRakuten(unittest.TestCase):
     username = os.environ['RAKUTEN_USERNAME']
     pwd = os.environ['RAKUTEN_PWD']
 
-    def test(self):
-        with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
-                     username=self.username, pwd=self.pwd) as rakuten:
-            df = rakuten.kashikabu_rate()
-            df.to_csv('/tmp/kashikabu_rate.csv')
-            #time.sleep(10000)
-            
+    def test_all_list(self):
+        kashikabu = Kashikabu(executable_path=self.executable_path, chrome_options=self.chrome_options)
+        df = kashikabu.get_all_list()
+        print(df)
 
 if __name__ == "__main__":
     unittest.main()
