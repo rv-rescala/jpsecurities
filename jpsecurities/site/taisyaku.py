@@ -156,5 +156,4 @@ class Taisyaku:
         df_other_seigenichiran =self.get_other_seigenichiran()
         df_other_seigenichiran = df_other_seigenichiran.drop("銘柄名", axis=1)
         df = pd.merge(df_pcsl_balance, df_other_seigenichiran, on='コード', how='outer')
-
         return df

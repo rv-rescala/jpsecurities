@@ -14,7 +14,7 @@ logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 class TestRakuten(unittest.TestCase):
     chrome_options = Options()
     chrome_options.binary_location = os.environ['CHROME_BIN_LOCATION']
-    chrome_options.headless = True
+    #chrome_options.headless = True
     executable_path = os.environ['CHROME_EXE_PATH']
     username = os.environ['RAKUTEN_USERNAME']
     pwd = os.environ['RAKUTEN_PWD']
@@ -22,8 +22,8 @@ class TestRakuten(unittest.TestCase):
     def test(self):
         with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
                      username=self.username, pwd=self.pwd) as rakuten:
-            df = rakuten.kashikabu_rate()
-            df.to_csv('/tmp/kashikabu_rate.csv')
+            df = rakuten.get_spot_margin_transaction_info()
+            df.to_csv('/tmp/get_spot_margin_transaction_info.csv')
             #time.sleep(10000)
             
 

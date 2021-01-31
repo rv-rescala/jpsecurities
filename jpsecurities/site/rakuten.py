@@ -13,14 +13,17 @@ import csv
 import pandas as pd
 import urllib.parse
 import re
-
 logger = logging.getLogger()
 from datetime import datetime, timedelta, timezone
+import time
 
 
 class GlobalMenu(Enum):
     DOMESTIC_STOCK = "国内株式"
     KASHIKABU = "貸株"
+    LIST_OF_SPOT = "保有商品一覧"
+    LIST_OF_MARGIN = "信用建玉一覧"
+
 
 class RakutenException(Exception):
     pass
@@ -118,14 +121,13 @@ class Rakuten:
         wait = WebDriverWait(self.driver, default_wait)
         result = None
         # 国内株式
-        if (menu is GlobalMenu.DOMESTIC_STOCK) or (menu is GlobalMenu.KASHIKABU):
+        if (menu is GlobalMenu.DOMESTIC_STOCK) or (menu is GlobalMenu.KASHIKABU) or (menu is GlobalMenu.LIST_OF_SPOT) or (menu is GlobalMenu.LIST_OF_MARGIN):
             # 国内株式メニュー
             wait.until(EC.presence_of_element_located((By.LINK_TEXT, "国内株式"))).click()
             if menu is GlobalMenu.DOMESTIC_STOCK:
                 result = BeautifulSoup(self.driver.page_source, "lxml")
-            # 貸株
-            if menu is GlobalMenu.KASHIKABU:
-                wait.until(EC.presence_of_element_located((By.LINK_TEXT, "貸株"))).click()
+            else:
+                wait.until(EC.presence_of_element_located((By.LINK_TEXT, menu.value))).click()
                 result = BeautifulSoup(self.driver.page_source, "lxml")
         return result
 
@@ -195,6 +197,11 @@ class Rakuten:
         return download_path
 
     def kashikabu_rate(self, default_wait: int = 10) -> pd.DataFrame:
+        """
+
+        :param default_wait:
+        :return:
+        """
         path = self.download_kashikabu_rate()
         df = pd.read_csv(path, encoding="SHIFT-JIS")
         df = df.rename(columns={'銘柄コード': 'コード'})
@@ -283,3 +290,77 @@ class Rakuten:
         }
         logger.debug(daily_revenue)
         return daily_revenue
+
+    def get_spot_transaction_info(self, default_wait: int = 10):
+        """
+
+        :param default_wait:
+        :return:
+        """
+        wait = WebDriverWait(self.driver, default_wait)
+        self.transition_global_menu(GlobalMenu.LIST_OF_SPOT, default_wait)
+
+        WebDriverWait(self.driver, default_wait).until(lambda x: x.find_element_by_id("poss-tbl-sp"))
+        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        sp = soup.find("table", {"id": "poss-tbl-sp"}).findAll("tr", {"align": "right"})
+
+        def __parse(x):
+            stock_code = x.findAll("td", {"class": "align-L valign-M"})[0].text.replace("\n", "")
+            company_name = x.findAll("td", {"class": "align-L valign-M"})[1].text.replace("\n", "")
+            stock_quantity = x.find("a", {"id": "stock_detail_link"}).text.replace("\n", "").replace("\t", "")
+            # 平均取得価額
+            average_acquisition_price = x.findAll("td", {"class": "valign-M align-R"})[1].text.split("\n")[2]
+            # 取得総額
+            total_acquisition_amount = x.findAll("td", {"class": "valign-M align-R"})[1].text.split("\n")[3]
+            # 現在値
+            _p = list(filter(lambda y: y != "", x.find("td", {"class": "cell-05 valign-M align-R"}).text.replace("\n", "").split("\t")))
+            present_value = _p[0]
+            # 前日比
+            day_before_ratio = _p[1]
+            # 時価評価額
+            _p = list(filter(lambda y: y != "",
+                             x.findAll("td", {"class": "valign-M align-R"})[2].text.replace("\n", "").split("\t")))
+            market_value = _p[0]
+            stock_gain_loss = _p[1]
+            #wait.until(EC.presence_of_element_located((By.LINK_TEXT, "詳細"))).click()
+            #self.driver.back()
+            return {"stock_code": stock_code, "spot_company_name": company_name, "spot_quantity": stock_quantity,
+                    "spot_average_acquisition_price": average_acquisition_price,
+                    "spot_total_acquisition_amount": total_acquisition_amount,
+                    "spot_present_value": present_value, "spot_day_before_ratio": day_before_ratio,
+                    "spot_market_value": market_value, "spot_gain_loss": stock_gain_loss}
+        d = list(map(lambda x: __parse(x), sp))
+        return pd.DataFrame(d)
+
+    def get_margin_transaction_info(self, default_wait: int = 10):
+        """
+
+        :param default_wait:
+        :return:
+        """
+        wait = WebDriverWait(self.driver, default_wait)
+        self.transition_global_menu(GlobalMenu.LIST_OF_MARGIN, default_wait)
+        wait.until(EC.presence_of_element_located((By.LINK_TEXT, "銘柄別合計"))).click()
+
+        soup = BeautifulSoup(self.driver.page_source, "lxml")
+        sp = list(map(lambda x: x.text.replace("\t","").split("\n"), soup.find("table", {"class": "ta1"}).findAll("tr")))
+        sp = list(map(lambda x: list(filter(lambda y: y != "", x)), sp))
+
+        def __perse(s):
+            company_name = s[2]
+            stock_code = s[3].split("\xa0")[0]
+            buy_or_sell = s[4]
+            margin_type = s[5]
+            stock_quantity = s[7]
+            stock_gain_loss = s[10]
+            return {"margin_company_name": company_name, "stock_code": stock_code, "margin_buy_or_sell": buy_or_sell,
+                    "margin_type": margin_type, "margin_quantity": stock_quantity, "margin_gain_loss": stock_gain_loss}
+        d = list(map(lambda x: __perse(x), sp[1:]))
+        return pd.DataFrame(d)
+
+    def get_spot_margin_transaction_info(self, default_wait: int = 10):
+        df_spot = self.get_spot_transaction_info(default_wait=default_wait)
+        df_margin = self.get_margin_transaction_info(default_wait=default_wait)
+        df = pd.merge(df_spot, df_margin, on='stock_code', how='outer')
+        print(df)
+        return df
