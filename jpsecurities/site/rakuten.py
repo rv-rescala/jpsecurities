@@ -330,7 +330,19 @@ class Rakuten:
                     "spot_present_value": present_value, "spot_day_before_ratio": day_before_ratio,
                     "spot_market_value": market_value, "spot_gain_loss": stock_gain_loss}
         d = list(map(lambda x: __parse(x), sp))
-        return pd.DataFrame(d)
+        df = pd.DataFrame(d)
+        df["spot_quantity"] = df["spot_quantity"].str.replace(' 株', '').str.replace(',', '').astype(float)
+        df["spot_average_acquisition_price"] = df["spot_average_acquisition_price"].str.replace(' 円', '').str.replace(
+            ',', '').astype(float)
+        df["spot_total_acquisition_amount"] = df["spot_total_acquisition_amount"].str.replace(',', '').str.replace(' 円',
+                                                                                                                   '').astype(
+            float)
+        df["spot_present_value"] = df["spot_present_value"].str.replace(' 円', '').str.replace(',', '').astype(float)
+        df["spot_day_before_ratio"] = df["spot_day_before_ratio"].str.replace(' 円', '').str.replace(',', '').astype(
+            float)
+        df["spot_market_value"] = df["spot_market_value"].str.replace(' 円', '').str.replace(',', '').astype(float)
+        df["spot_gain_loss"] = df["spot_gain_loss"].str.replace(' 円', '').str.replace(',', '').astype(float)
+        return df
 
     def get_margin_transaction_info(self, default_wait: int = 10):
         """
@@ -356,11 +368,14 @@ class Rakuten:
             return {"margin_company_name": company_name, "stock_code": stock_code, "margin_buy_or_sell": buy_or_sell,
                     "margin_type": margin_type, "margin_quantity": stock_quantity, "margin_gain_loss": stock_gain_loss}
         d = list(map(lambda x: __perse(x), sp[1:]))
-        return pd.DataFrame(d)
+        df = pd.DataFrame(d)
+        df["margin_quantity"] = df["margin_quantity"].str.replace(' 円', '').str.replace(',', '').astype(float)
+        df["margin_gain_loss"] = df["margin_gain_loss"].str.replace(' 円', '').str.replace(',', '').astype(float)
+        return df
 
     def get_spot_margin_transaction_info(self, default_wait: int = 10):
         df_spot = self.get_spot_transaction_info(default_wait=default_wait)
         df_margin = self.get_margin_transaction_info(default_wait=default_wait)
         df = pd.merge(df_spot, df_margin, on='stock_code', how='outer')
-        print(df)
+
         return df

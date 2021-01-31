@@ -23,6 +23,12 @@ class TestRakuten(unittest.TestCase):
         with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
                      username=self.username, pwd=self.pwd) as rakuten:
             df = rakuten.get_spot_margin_transaction_info()
+            df = rakuten.get_spot_margin_transaction_info()
+            #df['created_at'] = local_times["created_at"]
+
+            df.loc[df['spot_quantity'] == df['margin_quantity'], 'is_kashikabu_portfolio'] = True
+            df.loc[df['spot_quantity'] != df['margin_quantity'], 'is_kashikabu_portfolio'] = False
+
             df.to_csv('/tmp/get_spot_margin_transaction_info.csv')
             #time.sleep(10000)
             
