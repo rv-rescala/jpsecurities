@@ -152,9 +152,9 @@ class Rakuten:
         download(driver=self.driver, url=kashikabu_detail_csv_rul, path=download_path)
         return download_path
 
-    def kashikabu_accounting_details(self, default_wait: int = 10):
+    def kashikabu_accounting_details(self, default_wait: int = 10) -> pd.DataFrame:
         """
-        楽天証券の金利・配当金相当額 計上明細を取得
+        アカウントに紐づく楽天証券の金利・配当金相当額 計上明細を取得
         :param default_wait:
         :return:
         """
@@ -175,7 +175,8 @@ class Rakuten:
                     "lending_stock_interest_rate": row[6],
                     "recorded_amount": row[7]
                 })
-        return kashikabu_accounting_details
+        df = pd.DataFrame(kashikabu_accounting_details)
+        return df
 
     def download_kashikabu_rate(self, default_wait: int = 10, path: str = "/tmp"):
         """
@@ -291,7 +292,7 @@ class Rakuten:
         logger.debug(daily_revenue)
         return daily_revenue
 
-    def get_spot_transaction_info(self, default_wait: int = 10):
+    def get_spot_transaction_info(self, default_wait: int = 10) -> pd.DataFrame:
         """
 
         :param default_wait:
@@ -344,7 +345,7 @@ class Rakuten:
         df["spot_gain_loss"] = df["spot_gain_loss"].str.replace(' 円', '').str.replace(',', '').astype(float)
         return df
 
-    def get_margin_transaction_info(self, default_wait: int = 10):
+    def get_margin_transaction_info(self, default_wait: int = 10) -> pd.DataFrame:
         """
 
         :param default_wait:
@@ -373,9 +374,8 @@ class Rakuten:
         df["margin_gain_loss"] = df["margin_gain_loss"].str.replace(' 円', '').str.replace(',', '').astype(float)
         return df
 
-    def get_spot_margin_transaction_info(self, default_wait: int = 10):
+    def get_spot_margin_transaction_info(self, default_wait: int = 10) -> pd.DataFrame:
         df_spot = self.get_spot_transaction_info(default_wait=default_wait)
         df_margin = self.get_margin_transaction_info(default_wait=default_wait)
         df = pd.merge(df_spot, df_margin, on='stock_code', how='outer')
-
         return df
