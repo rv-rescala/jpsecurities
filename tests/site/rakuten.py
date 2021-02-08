@@ -24,7 +24,7 @@ class TestRakuten(unittest.TestCase):
                      username=self.username, pwd=self.pwd) as rakuten:
             df = rakuten.kashikabu_accounting_details()
             print(df)
-            #df.to_csv('/tmp/get_spot_margin_transaction_info.csv')
+            df.to_csv('~/Downloads/kashikabu_accounting_details.csv')
             #time.sleep(10000)
             
 
