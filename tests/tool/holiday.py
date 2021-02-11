@@ -1,5 +1,5 @@
 import unittest
-from jpsecurities.tool.holiday import today_is_holiday, CountryType
+from jpsecurities.util.holiday import today_is_holiday, CountryType
 from selenium.webdriver.chrome.options import Options
 import time
 import logging

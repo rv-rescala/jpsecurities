@@ -197,9 +197,10 @@ class Rakuten:
         download(driver=self.driver, url=url, path=download_path)
         return download_path
 
-    def kashikabu_rate(self, default_wait: int = 10) -> pd.DataFrame:
+    def kashikabu_rate(self, continuous: bool = False, default_wait: int = 10) -> pd.DataFrame:
         """
 
+        :param continuous:
         :param default_wait:
         :return:
         """
@@ -219,30 +220,54 @@ class Rakuten:
         if to_date > from_date:
             formated_from_date = datetime.strptime(f"{today.year}/{from_date}", '%Y/%m/%d')
             formated_to_date = datetime.strptime(f"{today.year}/{to_date}", '%Y/%m/%d') - timedelta(days=1)
-            df_from = df.assign(date=formated_from_date)
-            df_to = df.assign(date=formated_to_date)
-            df = pd.concat([df_from, df_to])
-            df = df.rename(columns={columns[2]: '貸株金利'})
-            df = df.rename(columns={columns[3]: '貸株金利(予定)'})
-            df = df.rename(columns={columns[4]: '信用貸株金利'})
-            df = df.rename(columns={columns[5]: '信用貸株金利(予定)'})
+            #df_from = df.assign(date=formated_from_date)
+            #df_to = df.assign(date=formated_to_date)
+            #df = pd.concat([df_from, df_to])
+            df["from_date"] = formated_from_date
+            df["to_date"] = formated_to_date
+            df["next_from_date"] = formated_to_date + timedelta(days=1)
+            df["next_to_date"] = formated_to_date + timedelta(days=7)
+            df = df.rename(columns={columns[0]: 'stock_code'})
+            df = df.rename(columns={columns[1]: 'stock_name'})
+            df = df.rename(columns={columns[2]: 'interest_rate'})
+            df = df.rename(columns={columns[3]: 'next_interest_rate'})
+            df = df.rename(columns={columns[4]: 'trust_interest_rate'})
+            df = df.rename(columns={columns[5]: 'next_trust_interest_rate'})
+            df = df.rename(columns={columns[6]: 'non_target_period'}) # 非対象期間
+            df = df.rename(columns={columns[7]: 'description'}) # 摘要
+            df["interest_rate"] = df["interest_rate"].str.replace('%', '').astype(float) * 0.01
+            df["next_interest_rate"] = df["next_interest_rate"].str.replace('%', '').astype(float) * 0.01
+            df["trust_interest_rate"] = df["trust_interest_rate"].str.replace('%', '').astype(float) * 0.01
+            df["next_trust_interest_rate"] = df["next_trust_interest_rate"].str.replace('%', '').astype(float) * 0.01
             logging.info(f"formated_from_date formated_to_date, {formated_from_date} {formated_to_date}")
         else:
             raise RakutenException(f"from_to date is illegal, {from_date}, {to_date}")
         # 日付データの連続化処理
         # Enhance: より効率的な値の連続化
-        codes = df["コード"].unique()
-        r_df = None
-        count = 0
-        for code in codes:
-            df_code = df[df["コード"] == code]
-            r = pd.date_range(start=df_code.date.min(), end=df_code.date.max())
-            df_filled_code = df_code.set_index('date').reindex(r).fillna(method='ffill').rename_axis('date').reset_index()
-            if count > 1:
-                r_df = pd.concat([r_df, df_filled_code])
-            else:
-                r_df = df_filled_code
-            count = count + 1
+        if continuous:
+            # コード一覧を取得
+            codes = df["stock_code"].unique()
+            r_df = None
+            count = 0
+            for code in codes:
+                df_code = df[df["stock_code"] == code]
+                # 連続化の処理
+                r = pd.date_range(start=df_code.from_date.min(), end=df_code.next_to_date.max())
+                df_continuous = df_code.set_index('from_date').reindex(r).fillna(method='ffill').rename_axis('from_date').reset_index()
+                # 今回、次回貸株金利を反映
+                df_current = df_continuous.query('from_date < to_date').copy()
+                df_current["target_date"] = df_current["from_date"]
+                df_next = df_continuous.query('from_date >= to_date').copy()
+                df_next["target_date"] = df_next["from_date"]
+                df_next["interest_rate"] = df_next["next_interest_rate"]
+                df_next["trust_interest_rate"] = df_next["next_trust_interest_rate"]
+                if count > 0:
+                    r_df = pd.concat([r_df, df_current, df_next])
+                else:
+                    r_df = pd.concat([df_current, df_next])
+                count = count + 1
+        else:
+            r_df = df
         return r_df
 
     def asset_info(self, default_wait: int = 10):

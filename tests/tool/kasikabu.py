@@ -1,5 +1,5 @@
 import unittest
-from jpsecurities.tool.kasikabu import Kashikabu
+from jpsecurities.util.kasikabu import Kashikabu
 from selenium.webdriver.chrome.options import Options
 import time
 import logging

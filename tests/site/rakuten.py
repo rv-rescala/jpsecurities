@@ -22,9 +22,9 @@ class TestRakuten(unittest.TestCase):
     def test(self):
         with Rakuten(executable_path=self.executable_path, chrome_options=self.chrome_options,
                      username=self.username, pwd=self.pwd) as rakuten:
-            df = rakuten.kashikabu_accounting_details()
+            df = rakuten.kashikabu_rate(continuous = True)
             print(df)
-            df.to_csv('~/Downloads/kashikabu_accounting_details.csv')
+            df.to_csv('~/Downloads/a.csv')
             #time.sleep(10000)
             
 
