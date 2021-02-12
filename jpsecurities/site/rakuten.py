@@ -1,5 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
@@ -8,14 +7,12 @@ from bs4 import BeautifulSoup
 from selenium.webdriver.support import expected_conditions as EC
 from enum import Enum
 from selenium.webdriver.common.by import By
-from jpsecurities.common.selenium import click_link_by_href, download
+from jpsecurities.util.selenium import click_link_by_href, download
 import csv
 import pandas as pd
-import urllib.parse
 import re
 logger = logging.getLogger()
 from datetime import datetime, timedelta, timezone
-import time
 
 
 class GlobalMenu(Enum):

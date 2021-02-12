@@ -3,8 +3,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
 from bs4 import BeautifulSoup
-from jpsecurities.common.selenium import download
-from jpsecurities.common.request import download
+from jpsecurities.util.selenium import download
+from jpsecurities.util.request import download
 import requests
 import pandas as pd
 

@@ -1,18 +1,7 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 import logging
-from selenium.webdriver.support.ui import WebDriverWait
-from bs4 import BeautifulSoup
-from selenium.webdriver.support import expected_conditions as EC
-from enum import Enum
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as EC
-from enum import Enum
-from selenium.webdriver.common.by import By
-from jpsecurities.common.request import webdriver_to_request
-from jpsecurities.common.request import download as request_download
+from jpsecurities.util.request import webdriver_to_request
+from jpsecurities.util.request import download as request_download
 
 logger = logging.getLogger()
 
