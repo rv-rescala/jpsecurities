@@ -8,8 +8,6 @@ from selenium.webdriver.chrome.options import Options
 from logging import Formatter, handlers, StreamHandler, getLogger, DEBUG
 import pandas as pd
 
-logging.getLogger().setLevel(DEBUG)
-logging.getLogger().addHandler(logging.StreamHandler(sys.stdout))
 
 
 class TestKabutan(unittest.TestCase):

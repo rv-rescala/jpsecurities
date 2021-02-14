@@ -215,6 +215,7 @@ class Rakuten:
 
         logger.info(f"rakuten kashikabu rate, from: {from_date}, to: {to_date}")
         if to_date > from_date:
+            # TBD: 年跨ぎの処理
             formated_from_date = datetime.strptime(f"{today.year}/{from_date}", '%Y/%m/%d')
             formated_to_date = datetime.strptime(f"{today.year}/{to_date}", '%Y/%m/%d') - timedelta(days=1)
             #df_from = df.assign(date=formated_from_date)
@@ -252,9 +253,9 @@ class Rakuten:
                 r = pd.date_range(start=df_code.from_date.min(), end=df_code.next_to_date.max())
                 df_continuous = df_code.set_index('from_date').reindex(r).fillna(method='ffill').rename_axis('from_date').reset_index()
                 # 今回、次回貸株金利を反映
-                df_current = df_continuous.query('from_date < to_date').copy()
+                df_current = df_continuous.query('from_date <= to_date').copy()
                 df_current["target_date"] = df_current["from_date"]
-                df_next = df_continuous.query('from_date >= to_date').copy()
+                df_next = df_continuous.query('from_date > to_date').copy()
                 df_next["target_date"] = df_next["from_date"]
                 df_next["interest_rate"] = df_next["next_interest_rate"]
                 df_next["trust_interest_rate"] = df_next["next_trust_interest_rate"]
