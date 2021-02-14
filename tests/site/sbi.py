@@ -24,6 +24,7 @@ class TestSBI(unittest.TestCase):
                      username=self.username, pwd=self.pwd) as sbi:
             df = sbi.kashikabu_rate()
             print(df)
+            df.to_csv('~/Downloads/a.csv')
             # df.to_csv('~/Downloads/a.csv')
             # time.sleep(10000)
 

@@ -111,4 +111,10 @@ class SBI:
         df = df.rename(columns={columns[3]: 'interest_rate'})
         df = df.rename(columns={columns[4]: 'non_target_duration'})
         df = df.rename(columns={columns[5]: 'description'})
+        df.target_date = df.target_date.str.replace("/", "")
+        # 13.25%
+        #df.interest_rate = df.query('interest_rate != ""')
+        df.interest_rate = df.interest_rate.str.replace(" ", "").str.replace("-", "").str.replace("%", "") #astype(float) * 0.01
+        df = df.query('interest_rate != ""')
+        df.interest_rate = df.interest_rate.astype(float) * 0.01
         return df
