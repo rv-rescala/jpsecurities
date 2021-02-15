@@ -186,6 +186,7 @@ class Rakuten:
         wait = WebDriverWait(self.driver, default_wait)
         self.transition_global_menu(GlobalMenu.KASHIKABU, default_wait)
         wait.until(EC.presence_of_element_located((By.LINK_TEXT, "貸株金利"))).click()
+        wait.until(EC.presence_of_element_located((By.CLASS_NAME, "tab1"))).click()
         # download csv
         session_id = self.get_session_id()
         download_path = f"{path}/rakuten_kashikabu_rate.csv"
@@ -218,9 +219,6 @@ class Rakuten:
             # TBD: 年跨ぎの処理
             formated_from_date = datetime.strptime(f"{today.year}/{from_date}", '%Y/%m/%d')
             formated_to_date = datetime.strptime(f"{today.year}/{to_date}", '%Y/%m/%d') - timedelta(days=1)
-            #df_from = df.assign(date=formated_from_date)
-            #df_to = df.assign(date=formated_to_date)
-            #df = pd.concat([df_from, df_to])
             df["from_date"] = formated_from_date
             df["to_date"] = formated_to_date
             df["next_from_date"] = formated_to_date + timedelta(days=1)
@@ -233,6 +231,10 @@ class Rakuten:
             df = df.rename(columns={columns[5]: 'next_trust_interest_rate'})
             df = df.rename(columns={columns[6]: 'non_target_period'}) # 非対象期間
             df = df.rename(columns={columns[7]: 'description'}) # 摘要
+            df = df.query('interest_rate != "-"')
+            df = df.query('next_interest_rate != "-"')
+            df = df.query('trust_interest_rate != "-"')
+            df = df.query('next_trust_interest_rate != "-"')
             df["interest_rate"] = df["interest_rate"].str.replace('%', '').astype(float) * 0.01
             df["next_interest_rate"] = df["next_interest_rate"].str.replace('%', '').astype(float) * 0.01
             df["trust_interest_rate"] = df["trust_interest_rate"].str.replace('%', '').astype(float) * 0.01
