@@ -54,10 +54,10 @@ class GMO:
 
             r = {
                 "stock_code": int(code),
-                "interest_rate": prev_lending_rate,
+                "interest_rate": float(prev_lending_rate) * 0.01,
                 "from_date":  __to_date(str(prev_date_from)),
                 "to_date": __to_date(str(prev_date_to)),
-                "next_interest_rate": next_lending_rate,
+                "next_interest_rate": float(next_lending_rate) * 0.01,
                 "next_from_date": __to_date(str(next_date_from)),
                 "next_to_date": __to_date(str(next_date_to))
             }
