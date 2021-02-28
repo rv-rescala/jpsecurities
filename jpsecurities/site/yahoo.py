@@ -19,7 +19,7 @@ class Yahoo:
         lineFiclearfix = [list(filter(lambda x: x, s.text.split("\n"))) for s in soup.findAll('div', {'class': 'lineFi clearfix'})]
         lineFiyjMSclearfix = [list(filter(lambda x: x, s.text.split("\n"))) for s in soup.findAll('div', {'class': 'lineFi yjMS clearfix'})]
         lineFiclearfix.extend(lineFiyjMSclearfix)
-        r = list(map(lambda x: {x[1]: x[0].replace("\xa0", "")}, lineFiclearfix))
+        r = dict(map(lambda x: (x[1], x[0].replace("\xa0", "")), lineFiclearfix))
 
         symbol = stocktable.findAll('th', {'class': 'symbol'})[0].text
         stockprice = stocktable.findAll('td', {'class': 'stoksPrice'})[1].text
