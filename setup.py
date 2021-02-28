@@ -16,14 +16,14 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     
 setup(
     name='jpsecurities',
-    version='0.2.4.8',
+    version='0.2.4.9',
     description='API for jp securities',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='rv',
     author_email='yo-maruya@rescala.jp',
     keywords='python crawler scraping',
-    install_requires=['requests', 'bs4', 'selenium', 'lxml', 'pandas', 'openpyxl'],
+    install_requires=['requests', 'bs4', 'selenium', 'lxml', 'pandas', 'openpyxl', 'numpy'],
     url='https://rescala.jp',
     license='MIT',
     packages=find_packages(exclude=('tests')),
